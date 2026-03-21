@@ -1,24 +1,38 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head><meta charset="UTF-8"><title>Pending Comments</title></head>
-<body>
-    <h1>Pending Comments</h1>
-    <a href="/admin">← Back</a>
+{% extends "admin/base.html" %}
 
-    {% for comment in comments %}
-    <div style="border:1px solid #ccc; margin:1em; padding:1em">
-        <strong>{{ comment.author_name }}</strong> ({{ comment.author_email }})
-        <time>{{ comment.created_at }}</time>
-        <p>{{ comment.content }}</p>
-        <form method="POST" action="/admin/comments/{{ comment.id }}/approve" style="display:inline">
-            <button type="submit">Approve</button>
+{% block title %}comments{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-heading">pending comments</h1>
+</div>
+
+{% for comment in comments %}
+<div class="comment-card">
+    <div class="comment-card-meta">
+        <div class="comment-card-author">
+            <span class="name">{{ comment.author_name }}</span>
+            <span class="email">{{ comment.author_email }}</span>
+            <span class="post-ref">on post {{ comment.post_id }}</span>
+        </div>
+        <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted)">
+            {{ comment.created_at }}
+        </span>
+    </div>
+
+    <p class="comment-card-body">{{ comment.content }}</p>
+
+    <div class="row-actions">
+        <form method="POST" action="/admin/comments/{{ comment.id }}/approve">
+            <button type="submit" class="action-btn primary">approve</button>
         </form>
-        <form method="POST" action="/admin/comments/{{ comment.id }}/delete" style="display:inline">
-            <button type="submit">Delete</button>
+        <form method="POST" action="/admin/comments/{{ comment.id }}/delete"
+              onsubmit="return confirm('delete this comment?')">
+            <button type="submit" class="action-btn danger">delete</button>
         </form>
     </div>
-    {% else %}
-    <p>No pending comments.</p>
-    {% endfor %}
-</body>
-</html>
+</div>
+{% else %}
+<p class="empty-state">no pending comments</p>
+{% endfor %}
+{% endblock %}

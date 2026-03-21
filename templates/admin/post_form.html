@@ -1,32 +1,45 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head><meta charset="UTF-8"><title>{% if post %}Edit post{% else %}New post{% endif %}</title></head>
-<body>
-    <h1>{% if post %}Edit: {{ post.title }}{% else %}New post{% endif %}</h1>
+{% extends "admin/base.html" %}
 
-    <form method="POST" action="{% if post %}/admin/posts/{{ post.id }}{% else %}/admin/posts{% endif %}">
-        <div>
-            <label>Title<br>
-                <input type="text" name="title" value="{{ post.title | default(value='') }}" required>
-            </label>
-        </div>
-        <div>
-            <label>Excerpt<br>
-                <input type="text" name="excerpt" value="{{ post.excerpt | default(value='') }}">
-            </label>
-        </div>
-        <div>
-            <label>Tags (comma-separated)<br>
-                <input type="text" name="tags" placeholder="rust, web, devlog">
-            </label>
-        </div>
-        <div>
-            <label>Content (Markdown)<br>
-                <textarea name="content" rows="20" required>{{ post.content | default(value='') }}</textarea>
-            </label>
-        </div>
-        <button type="submit">Save</button>
-        <a href="/admin">Cancel</a>
-    </form>
-</body>
-</html>
+{% block title %}{% if post %}edit post{% else %}new post{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-heading">{% if post %}edit post{% else %}new post{% endif %}</h1>
+    {% if post %}
+    <a href="/posts/{{ post.slug }}" target="_blank" class="action-btn">view</a>
+    {% endif %}
+</div>
+
+<form method="POST"
+      action="{% if post %}/admin/posts/{{ post.id }}{% else %}/admin/posts{% endif %}"
+      class="post-form">
+
+    <div class="form-group">
+        <label>title</label>
+        <input type="text" name="title" value="{{ post.title | default(value='') }}"
+               placeholder="Post title" required>
+    </div>
+
+    <div class="form-group">
+        <label>excerpt <span style="color:var(--border)">(optional)</span></label>
+        <input type="text" name="excerpt" value="{{ post.excerpt | default(value='') }}"
+               placeholder="Short description shown in post list">
+    </div>
+
+    <div class="form-group">
+        <label>tags <span style="color:var(--border)">(comma separated)</span></label>
+        <input type="text" name="tags" placeholder="rust, web, devlog">
+    </div>
+
+    <div class="form-group">
+        <label>content <span style="color:var(--border)">(markdown)</span></label>
+        <textarea name="content" required
+                  placeholder="# Title&#10;&#10;Write your post in markdown...">{{ post.content | default(value='') }}</textarea>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">save</button>
+        <a href="/admin" class="btn btn-ghost">cancel</a>
+    </div>
+</form>
+{% endblock %}

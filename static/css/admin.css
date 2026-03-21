@@ -1,0 +1,181 @@
+/* ─── Admin nav ──────────────────────────────────────────────────────────── */
+.nav-logout {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    cursor: pointer;
+    padding: 0;
+}
+.nav-logout:hover { color: var(--red); }
+
+/* ─── Page header ────────────────────────────────────────────────────────── */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.page-heading {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.page-heading::before { content: "// "; color: var(--accent-dim); }
+
+/* ─── Table ──────────────────────────────────────────────────────────────── */
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.admin-table th {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-weight: 400;
+}
+
+.admin-table td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.admin-table tr:hover td { background: var(--bg-2); }
+
+.admin-table .col-title { color: var(--text); font-weight: 500; }
+.admin-table .col-title a { color: var(--text); }
+.admin-table .col-title a:hover { color: var(--accent); text-decoration: none; }
+
+/* ─── Status badge ───────────────────────────────────────────────────────── */
+.badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    text-transform: lowercase;
+}
+.badge-published {
+    background: rgba(57, 211, 83, 0.1);
+    color: var(--accent);
+    border: 1px solid var(--accent-dim);
+}
+.badge-draft {
+    background: var(--bg-3);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+}
+
+/* ─── Row actions ────────────────────────────────────────────────────────── */
+.row-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.action-btn {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
+    display: inline-block;
+}
+.action-btn:hover {
+    color: var(--text);
+    border-color: var(--text-muted);
+    text-decoration: none;
+}
+.action-btn.danger:hover {
+    color: var(--red);
+    border-color: var(--red);
+}
+.action-btn.primary:hover {
+    color: var(--accent);
+    border-color: var(--accent-dim);
+}
+
+/* ─── Post form ──────────────────────────────────────────────────────────── */
+.post-form { display: flex; flex-direction: column; gap: 1.25rem; }
+
+.post-form .form-group label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    display: block;
+    margin-bottom: 0.35rem;
+}
+
+.post-form textarea[name="content"] {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    min-height: 480px;
+    line-height: 1.65;
+}
+
+.form-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+}
+
+/* ─── Comment card ───────────────────────────────────────────────────────── */
+.comment-card {
+    padding: 1.25rem;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+}
+
+.comment-card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.comment-card-author {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+}
+.comment-card-author .name { color: var(--accent); }
+.comment-card-author .email { color: var(--text-muted); margin-left: 0.5rem; }
+.comment-card-author .post-ref {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+}
+
+.comment-card-body {
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: var(--bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}

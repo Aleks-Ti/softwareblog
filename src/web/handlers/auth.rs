@@ -29,18 +29,23 @@ pub async fn login(
     jar: PrivateCookieJar,
     Form(form): Form<LoginForm>,
 ) -> Result<impl IntoResponse, AppError> {
-    let hash = PasswordHash::new(&state.config.admin_password_hash)
-        .map_err(|e| AppError::Internal(anyhow::anyhow!("Invalid password hash in config: {e}")))?;
+    let login_error = |msg: &str| {
+        let mut ctx = tera::Context::new();
+        ctx.insert("error", msg);
+        render(&state.tera, "admin/login.html", ctx).map(IntoResponse::into_response)
+    };
+
+    let Ok(hash) = PasswordHash::new(&state.config.admin_password_hash) else {
+        tracing::error!("ADMIN_PASSWORD_HASH in .env is malformed — did you wrap it in quotes?");
+        return login_error("Server misconfiguration: password hash is invalid");
+    };
 
     let valid = Argon2::default()
         .verify_password(form.password.as_bytes(), &hash)
         .is_ok();
 
     if !valid {
-        let mut ctx = tera::Context::new();
-        ctx.insert("error", "Invalid password");
-        return render(&state.tera, "admin/login.html", ctx)
-            .map(IntoResponse::into_response);
+        return login_error("Wrong password");
     }
 
     let cookie = Cookie::build(("auth_session", "1"))
