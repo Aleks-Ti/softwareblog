@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="UTF-8"><title>{% if post %}Edit post{% else %}New post{% endif %}</title></head>
+<body>
+    <h1>{% if post %}Edit: {{ post.title }}{% else %}New post{% endif %}</h1>
+
+    <form method="POST" action="{% if post %}/admin/posts/{{ post.id }}{% else %}/admin/posts{% endif %}">
+        <div>
+            <label>Title<br>
+                <input type="text" name="title" value="{{ post.title | default(value='') }}" required>
+            </label>
+        </div>
+        <div>
+            <label>Excerpt<br>
+                <input type="text" name="excerpt" value="{{ post.excerpt | default(value='') }}">
+            </label>
+        </div>
+        <div>
+            <label>Tags (comma-separated)<br>
+                <input type="text" name="tags" placeholder="rust, web, devlog">
+            </label>
+        </div>
+        <div>
+            <label>Content (Markdown)<br>
+                <textarea name="content" rows="20" required>{{ post.content | default(value='') }}</textarea>
+            </label>
+        </div>
+        <button type="submit">Save</button>
+        <a href="/admin">Cancel</a>
+    </form>
+</body>
+</html>

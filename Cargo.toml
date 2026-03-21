@@ -1,0 +1,61 @@
+[package]
+name = "softwareblog"
+version = "0.1.0"
+edition = "2021"
+default-run = "softwareblog"
+
+[[bin]]
+name = "seed"
+path = "src/bin/seed.rs"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Web framework
+axum = { version = "0.7", features = ["multipart"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["fs", "cors", "trace", "compression-gzip"] }
+axum-extra = { version = "0.9", features = ["cookie", "cookie-private"] }
+
+# Database
+sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls-ring", "postgres", "uuid", "chrono", "migrate"] }
+
+# Templates
+tera = "1"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# IDs
+uuid = { version = "1", features = ["v4", "serde"] }
+
+# Dates
+chrono = { version = "0.4", features = ["serde"] }
+
+# Config / Env
+dotenvy = "0.15"
+
+# Markdown
+pulldown-cmark = "0.11"
+
+# Slugs
+slug = "0.1"
+
+# Error handling
+thiserror = "1"
+anyhow = "1"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Auth
+argon2 = "0.5"
+
+# Async traits
+async-trait = "0.1"
+
+# Cookie time types
+time = "0.3"

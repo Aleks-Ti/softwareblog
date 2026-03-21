@@ -1,0 +1,14 @@
+{# HTMX fragment — also included by posts/list.html #}
+{% for post in posts %}
+<article class="post-card">
+    <div class="post-meta">
+        <span class="date">{{ post.published_at | default(value=post.created_at) }}</span>
+    </div>
+    <h2><a href="/posts/{{ post.slug }}">{{ post.title }}</a></h2>
+    {% if post.excerpt %}
+    <p class="post-excerpt">{{ post.excerpt }}</p>
+    {% endif %}
+</article>
+{% else %}
+<p class="empty-state">no posts yet</p>
+{% endfor %}

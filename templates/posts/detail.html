@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }}{% endblock %}
+
+{% block content %}
+<div class="post-header">
+    <div class="post-meta">
+        <span class="date">{{ post.published_at | default(value=post.created_at) }}</span>
+    </div>
+    <h1 class="post-title">{{ post.title }}</h1>
+</div>
+
+<div class="content">
+    {{ rendered_content | safe }}
+</div>
+
+<section class="comments-section">
+    <h2 class="comments-title">comments</h2>
+
+    <div id="comments-list">
+        {% for comment in comments %}
+        <div class="comment">
+            <div class="comment-author">{{ comment.author_name }}</div>
+            <div class="comment-date">{{ comment.created_at }}</div>
+            <p class="comment-body">{{ comment.content }}</p>
+        </div>
+        {% else %}
+        <p class="empty-state">no comments yet</p>
+        {% endfor %}
+    </div>
+
+    <p class="comment-form-title">leave a comment</p>
+    <form hx-post="/posts/{{ post.slug }}/comments"
+          hx-target="#comments-list"
+          hx-swap="beforeend"
+          hx-on::after-request="this.reset()">
+        <div class="form-group">
+            <label for="author_name">name</label>
+            <input type="text" id="author_name" name="author_name" required>
+        </div>
+        <div class="form-group">
+            <label for="author_email">email</label>
+            <input type="email" id="author_email" name="author_email" required>
+        </div>
+        <div class="form-group">
+            <label for="content">message</label>
+            <textarea id="content" name="content" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">submit</button>
+    </form>
+</section>
+{% endblock %}

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="UTF-8"><title>Pending Comments</title></head>
+<body>
+    <h1>Pending Comments</h1>
+    <a href="/admin">← Back</a>
+
+    {% for comment in comments %}
+    <div style="border:1px solid #ccc; margin:1em; padding:1em">
+        <strong>{{ comment.author_name }}</strong> ({{ comment.author_email }})
+        <time>{{ comment.created_at }}</time>
+        <p>{{ comment.content }}</p>
+        <form method="POST" action="/admin/comments/{{ comment.id }}/approve" style="display:inline">
+            <button type="submit">Approve</button>
+        </form>
+        <form method="POST" action="/admin/comments/{{ comment.id }}/delete" style="display:inline">
+            <button type="submit">Delete</button>
+        </form>
+    </div>
+    {% else %}
+    <p>No pending comments.</p>
+    {% endfor %}
+</body>
+</html>
