@@ -3,8 +3,8 @@ use slug::slugify;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::domain::errors::DomainError;
 use crate::domain::tag::{Tag, TagRepository};
-use crate::error::AppError;
 
 pub struct PostgresTagRepository {
     pool: PgPool,
@@ -18,14 +18,14 @@ impl PostgresTagRepository {
 
 #[async_trait]
 impl TagRepository for PostgresTagRepository {
-    async fn list(&self) -> Result<Vec<Tag>, AppError> {
+    async fn list(&self) -> Result<Vec<Tag>, DomainError> {
         let tags = sqlx::query_as::<_, Tag>("SELECT id, name, slug FROM tags ORDER BY name")
             .fetch_all(&self.pool)
             .await?;
         Ok(tags)
     }
 
-    async fn find_by_slug(&self, slug: &str) -> Result<Option<Tag>, AppError> {
+    async fn find_by_slug(&self, slug: &str) -> Result<Option<Tag>, DomainError> {
         let tag =
             sqlx::query_as::<_, Tag>("SELECT id, name, slug FROM tags WHERE slug = $1")
                 .bind(slug)
@@ -34,7 +34,7 @@ impl TagRepository for PostgresTagRepository {
         Ok(tag)
     }
 
-    async fn find_by_post(&self, post_id: Uuid) -> Result<Vec<Tag>, AppError> {
+    async fn find_by_post(&self, post_id: Uuid) -> Result<Vec<Tag>, DomainError> {
         let tags = sqlx::query_as::<_, Tag>(
             "SELECT t.id, t.name, t.slug FROM tags t
              INNER JOIN post_tags pt ON pt.tag_id = t.id
@@ -47,10 +47,9 @@ impl TagRepository for PostgresTagRepository {
         Ok(tags)
     }
 
-    async fn find_or_create(&self, name: &str) -> Result<Tag, AppError> {
+    async fn find_or_create(&self, name: &str) -> Result<Tag, DomainError> {
         let slug = slugify(name);
 
-        // INSERT ... ON CONFLICT DO NOTHING, then SELECT — avoids race conditions.
         sqlx::query("INSERT INTO tags (name, slug) VALUES ($1, $2) ON CONFLICT (slug) DO NOTHING")
             .bind(name)
             .bind(&slug)

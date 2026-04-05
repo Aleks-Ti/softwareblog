@@ -35,25 +35,36 @@ pub async fn index(
 }
 
 /// GET /posts/:slug
+///
+/// Эталонный тонкий handler в DDD-стиле.
+///
+/// Handler делает только три вещи:
+/// 1. Парсит HTTP-запрос (Path extractor)
+/// 2. Вызывает use case
+/// 3. Рендерит ответ
+///
+/// Бизнес-правило "только опубликованные посты видны публично" теперь живёт
+/// в GetPostBySlug::execute(), а не здесь. Handler не знает о PostStatus.
+///
+/// Сравни с исходной версией в git history: там был `if !post.is_published()` прямо в handler'е.
+///
+/// Поток ошибок (неявный, через ? и From<>):
+///   DomainError::NotFound
+///     → ApplicationError::Domain(NotFound)
+///     → AppError::NotFound
+///     → HTTP 404
 pub async fn show(
     State(state): State<AppState>,
     Path(slug): Path<String>,
 ) -> Result<impl IntoResponse, AppError> {
-    let post = state
-        .posts
-        .get_by_slug(&slug)
-        .await?
-        .ok_or_else(|| AppError::NotFound(format!("Post '{slug}' not found")))?;
+    // Весь сценарий (найти + проверить статус) инкапсулирован в use case.
+    // ? конвертирует ApplicationError → AppError через From (web/errors.rs).
+    let post = state.get_post_by_slug.execute(&slug).await?;
 
-    if !post.is_published() {
-        return Err(AppError::NotFound(format!("Post '{slug}' not found")));
-    }
-
-    let tags = state
-        .posts
-        .all_tags() // TODO: get tags for this specific post
-        .await?;
-
+    // TODO: загружать теги конкретного поста, а не все теги.
+    // Сейчас state.posts.all_tags() возвращает все — это ошибка проектирования,
+    // помечена в оригинале как TODO. Пример того что аудит должен был найти.
+    let tags = state.posts.all_tags().await?;
     let comments = state.comments.for_post(post.id, false).await?;
     let rendered_content = post.render_content();
 

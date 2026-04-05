@@ -3,7 +3,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::domain::comment::{Comment, CommentRepository, CreateComment};
-use crate::error::AppError;
+use crate::domain::errors::DomainError;
 
 pub struct PostgresCommentRepository {
     pool: PgPool,
@@ -21,7 +21,7 @@ impl CommentRepository for PostgresCommentRepository {
         &self,
         post_id: Uuid,
         only_approved: bool,
-    ) -> Result<Vec<Comment>, AppError> {
+    ) -> Result<Vec<Comment>, DomainError> {
         let sql = if only_approved {
             "SELECT id, post_id, author_name, author_email, content, is_approved, created_at
              FROM comments WHERE post_id = $1 AND is_approved = TRUE
@@ -40,7 +40,7 @@ impl CommentRepository for PostgresCommentRepository {
         Ok(comments)
     }
 
-    async fn find_pending(&self) -> Result<Vec<Comment>, AppError> {
+    async fn find_pending(&self) -> Result<Vec<Comment>, DomainError> {
         let comments = sqlx::query_as::<_, Comment>(
             "SELECT id, post_id, author_name, author_email, content, is_approved, created_at
              FROM comments WHERE is_approved = FALSE
@@ -52,7 +52,7 @@ impl CommentRepository for PostgresCommentRepository {
         Ok(comments)
     }
 
-    async fn create(&self, data: CreateComment) -> Result<Comment, AppError> {
+    async fn create(&self, data: CreateComment) -> Result<Comment, DomainError> {
         let comment = sqlx::query_as::<_, Comment>(
             "INSERT INTO comments (post_id, author_name, author_email, content)
              VALUES ($1, $2, $3, $4)
@@ -68,7 +68,7 @@ impl CommentRepository for PostgresCommentRepository {
         Ok(comment)
     }
 
-    async fn approve(&self, id: Uuid) -> Result<Comment, AppError> {
+    async fn approve(&self, id: Uuid) -> Result<Comment, DomainError> {
         let comment = sqlx::query_as::<_, Comment>(
             "UPDATE comments SET is_approved = TRUE WHERE id = $1
              RETURNING id, post_id, author_name, author_email, content, is_approved, created_at",
@@ -76,19 +76,19 @@ impl CommentRepository for PostgresCommentRepository {
         .bind(id)
         .fetch_optional(&self.pool)
         .await?
-        .ok_or_else(|| AppError::NotFound(format!("Comment {id} not found")))?;
+        .ok_or_else(|| DomainError::NotFound(format!("Comment {id} not found")))?;
 
         Ok(comment)
     }
 
-    async fn delete(&self, id: Uuid) -> Result<(), AppError> {
+    async fn delete(&self, id: Uuid) -> Result<(), DomainError> {
         let result = sqlx::query("DELETE FROM comments WHERE id = $1")
             .bind(id)
             .execute(&self.pool)
             .await?;
 
         if result.rows_affected() == 0 {
-            return Err(AppError::NotFound(format!("Comment {id} not found")));
+            return Err(DomainError::NotFound(format!("Comment {id} not found")));
         }
         Ok(())
     }

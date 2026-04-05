@@ -39,6 +39,18 @@ pub struct PostForm {
 }
 
 /// POST /admin/posts
+///
+/// СКЕЛЕТ ДЛЯ САМОСТОЯТЕЛЬНОЙ РАБОТЫ:
+/// Замени тело этого handler'а на использование CreatePost use case.
+///
+/// Шаги:
+/// 1. Создай `use crate::application::create_post::{CreatePost, CreatePostCommand};`
+/// 2. Реализуй `CreatePost::execute()` в application/create_post.rs
+/// 3. Сконструируй use case: `let use_case = CreatePost::new(state.post_repo.clone(), state.tag_repo.clone())`
+///    — для этого нужно добавить post_repo и tag_repo в AppState,
+///    или вынести CreatePost как Arc<CreatePost> по аналогии с get_post_by_slug.
+/// 4. Вызови: `let post = use_case.execute(CreatePostCommand { ... }).await?;`
+/// 5. Redirect как сейчас.
 pub async fn create_post(
     State(state): State<AppState>,
     Form(form): Form<PostForm>,
@@ -51,6 +63,8 @@ pub async fn create_post(
         .filter(|s| !s.is_empty())
         .collect();
 
+    // Пока используем PostService напрямую через трейт-порт.
+    // После реализации CreatePost use case — заменить на use_case.execute().
     let post = state
         .posts
         .create(form.title, form.content, form.excerpt, tag_names)
@@ -75,7 +89,7 @@ pub async fn edit_post(
     render(&state.tera, "admin/post_form.html", ctx)
 }
 
-/// POST /admin/posts/:id  (HTML forms don't support PUT, so we use POST)
+/// POST /admin/posts/:id
 pub async fn update_post(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

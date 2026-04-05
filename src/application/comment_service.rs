@@ -2,9 +2,10 @@ use std::sync::Arc;
 
 use uuid::Uuid;
 
+use crate::application::errors::ApplicationError;
 use crate::domain::comment::{Comment, CommentRepository, CreateComment};
+use crate::domain::errors::DomainError;
 use crate::domain::post::PostRepository;
-use crate::error::AppError;
 
 pub struct CommentService {
     comments: Arc<dyn CommentRepository>,
@@ -20,36 +21,39 @@ impl CommentService {
         &self,
         post_id: Uuid,
         include_unapproved: bool,
-    ) -> Result<Vec<Comment>, AppError> {
-        self.comments
-            .find_by_post(post_id, !include_unapproved)
-            .await
+    ) -> Result<Vec<Comment>, ApplicationError> {
+        Ok(self.comments.find_by_post(post_id, !include_unapproved).await?)
     }
 
-    /// Submit a new comment. Comments start unapproved.
-    pub async fn submit(&self, data: CreateComment) -> Result<Comment, AppError> {
+    /// Отправить комментарий. Комментарии начинают как неодобренные.
+    ///
+    /// Бизнес-правило: нельзя комментировать неопубликованный пост.
+    /// Это правило живёт в сервисе (application layer), а не в handler'е,
+    /// потому что оно относится к логике, а не к HTTP.
+    pub async fn submit(&self, data: CreateComment) -> Result<Comment, ApplicationError> {
         let post = self
             .posts
             .find_by_id(data.post_id)
             .await?
-            .ok_or_else(|| AppError::NotFound("Post not found".into()))?;
+            .ok_or_else(|| DomainError::NotFound("Post not found".into()))?;
 
         if !post.is_published() {
-            return Err(AppError::NotFound("Post not found".into()));
+            // Возвращаем NotFound, а не Forbidden — не раскрываем факт существования черновика.
+            return Err(DomainError::NotFound("Post not found".into()).into());
         }
 
-        self.comments.create(data).await
+        Ok(self.comments.create(data).await?)
     }
 
-    pub async fn approve(&self, id: Uuid) -> Result<Comment, AppError> {
-        self.comments.approve(id).await
+    pub async fn approve(&self, id: Uuid) -> Result<Comment, ApplicationError> {
+        Ok(self.comments.approve(id).await?)
     }
 
-    pub async fn delete(&self, id: Uuid) -> Result<(), AppError> {
-        self.comments.delete(id).await
+    pub async fn delete(&self, id: Uuid) -> Result<(), ApplicationError> {
+        Ok(self.comments.delete(id).await?)
     }
 
-    pub async fn pending(&self) -> Result<Vec<Comment>, AppError> {
-        self.comments.find_pending().await
+    pub async fn pending(&self) -> Result<Vec<Comment>, ApplicationError> {
+        Ok(self.comments.find_pending().await?)
     }
 }

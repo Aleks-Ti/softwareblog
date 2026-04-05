@@ -3,11 +3,19 @@ use chrono::Utc;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::domain::errors::DomainError;
 use crate::domain::post::{
     CreatePost, Post, PostFilters, PostRepository, UpdatePost,
 };
-use crate::error::AppError;
 
+/// Адаптер: реализация PostRepository поверх PostgreSQL.
+///
+/// DDD-принцип: инфраструктурный слой реализует порт (trait), определённый в домене.
+/// Домен не знает про PgPool — знает только про PostRepository.
+///
+/// sqlx::Error конвертируется в DomainError автоматически через From<sqlx::Error>,
+/// определённый в infrastructure/postgres/mod.rs. Поэтому `?` работает
+/// несмотря на то что trait возвращает DomainError, а не sqlx::Error.
 pub struct PostgresPostRepository {
     pool: PgPool,
 }
@@ -20,7 +28,7 @@ impl PostgresPostRepository {
 
 #[async_trait]
 impl PostRepository for PostgresPostRepository {
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<Post>, AppError> {
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<Post>, DomainError> {
         let post = sqlx::query_as::<_, Post>(
             "SELECT id, title, slug, content, excerpt, status, created_at, updated_at, published_at
              FROM posts WHERE id = $1",
@@ -32,7 +40,7 @@ impl PostRepository for PostgresPostRepository {
         Ok(post)
     }
 
-    async fn find_by_slug(&self, slug: &str) -> Result<Option<Post>, AppError> {
+    async fn find_by_slug(&self, slug: &str) -> Result<Option<Post>, DomainError> {
         let post = sqlx::query_as::<_, Post>(
             "SELECT id, title, slug, content, excerpt, status, created_at, updated_at, published_at
              FROM posts WHERE slug = $1",
@@ -44,12 +52,10 @@ impl PostRepository for PostgresPostRepository {
         Ok(post)
     }
 
-    async fn list(&self, filters: PostFilters) -> Result<(Vec<Post>, u64), AppError> {
+    async fn list(&self, filters: PostFilters) -> Result<(Vec<Post>, u64), DomainError> {
         let per_page = filters.per_page.max(1) as i64;
         let offset = ((filters.page.saturating_sub(1)) as i64) * per_page;
 
-        // Build dynamic query. For a personal blog the data volume is tiny,
-        // so fetching with simple conditions is fine.
         let (status_filter, status_val) = match &filters.status {
             Some(s) => ("AND p.status = $3", Some(s.clone())),
             None => ("", None),
@@ -89,7 +95,7 @@ impl PostRepository for PostgresPostRepository {
         Ok((posts, total as u64))
     }
 
-    async fn create(&self, data: CreatePost) -> Result<Post, AppError> {
+    async fn create(&self, data: CreatePost) -> Result<Post, DomainError> {
         let mut tx = self.pool.begin().await?;
 
         let post = sqlx::query_as::<_, Post>(
@@ -116,8 +122,7 @@ impl PostRepository for PostgresPostRepository {
         Ok(post)
     }
 
-    async fn update(&self, id: Uuid, data: UpdatePost) -> Result<Post, AppError> {
-        // Partial updates — only set fields that were provided.
+    async fn update(&self, id: Uuid, data: UpdatePost) -> Result<Post, DomainError> {
         let post = sqlx::query_as::<_, Post>(
             "UPDATE posts SET
                title   = COALESCE($2, title),
@@ -132,24 +137,24 @@ impl PostRepository for PostgresPostRepository {
         .bind(data.excerpt)
         .fetch_optional(&self.pool)
         .await?
-        .ok_or_else(|| AppError::NotFound(format!("Post {id} not found")))?;
+        .ok_or_else(|| DomainError::NotFound(format!("Post {id} not found")))?;
 
         Ok(post)
     }
 
-    async fn delete(&self, id: Uuid) -> Result<(), AppError> {
+    async fn delete(&self, id: Uuid) -> Result<(), DomainError> {
         let result = sqlx::query("DELETE FROM posts WHERE id = $1")
             .bind(id)
             .execute(&self.pool)
             .await?;
 
         if result.rows_affected() == 0 {
-            return Err(AppError::NotFound(format!("Post {id} not found")));
+            return Err(DomainError::NotFound(format!("Post {id} not found")));
         }
         Ok(())
     }
 
-    async fn publish(&self, id: Uuid) -> Result<Post, AppError> {
+    async fn publish(&self, id: Uuid) -> Result<Post, DomainError> {
         let post = sqlx::query_as::<_, Post>(
             "UPDATE posts SET status = 'published', published_at = COALESCE(published_at, $2)
              WHERE id = $1
@@ -159,12 +164,12 @@ impl PostRepository for PostgresPostRepository {
         .bind(Utc::now())
         .fetch_optional(&self.pool)
         .await?
-        .ok_or_else(|| AppError::NotFound(format!("Post {id} not found")))?;
+        .ok_or_else(|| DomainError::NotFound(format!("Post {id} not found")))?;
 
         Ok(post)
     }
 
-    async fn unpublish(&self, id: Uuid) -> Result<Post, AppError> {
+    async fn unpublish(&self, id: Uuid) -> Result<Post, DomainError> {
         let post = sqlx::query_as::<_, Post>(
             "UPDATE posts SET status = 'draft'
              WHERE id = $1
@@ -173,7 +178,7 @@ impl PostRepository for PostgresPostRepository {
         .bind(id)
         .fetch_optional(&self.pool)
         .await?
-        .ok_or_else(|| AppError::NotFound(format!("Post {id} not found")))?;
+        .ok_or_else(|| DomainError::NotFound(format!("Post {id} not found")))?;
 
         Ok(post)
     }
