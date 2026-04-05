@@ -2,44 +2,107 @@
 
 {% block title %}{% if post %}edit post{% else %}new post{% endif %}{% endblock %}
 
+{% block head %}
+<style>
+    /* wider layout for split editor */
+    header, main, footer { max-width: 1200px; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
     <h1 class="page-heading">{% if post %}edit post{% else %}new post{% endif %}</h1>
-    {% if post %}
-    <a href="/posts/{{ post.slug }}" target="_blank" class="action-btn">view</a>
-    {% endif %}
+    <div style="display:flex;gap:0.5rem;align-items:center">
+        {% if post %}
+        <a href="/posts/{{ post.slug }}" target="_blank" class="action-btn">view live</a>
+        {% endif %}
+        <button type="button" class="action-btn" id="toggle-preview">split view</button>
+    </div>
 </div>
 
 <form method="POST"
       action="{% if post %}/admin/posts/{{ post.id }}{% else %}/admin/posts{% endif %}"
-      class="post-form">
+      class="post-form"
+      id="post-form">
 
-    <div class="form-group">
-        <label>title</label>
-        <input type="text" name="title" value="{{ post.title | default(value='') }}"
-               placeholder="Post title" required>
+    <div class="form-meta-row">
+        <div class="form-group" style="flex:1">
+            <label>title</label>
+            <input type="text" name="title" id="post-title"
+                   value="{{ post.title | default(value='') }}"
+                   placeholder="Post title" required>
+        </div>
+        <div class="form-group" style="flex:1">
+            <label>excerpt <span class="label-hint">(optional)</span></label>
+            <input type="text" name="excerpt"
+                   value="{{ post.excerpt | default(value='') }}"
+                   placeholder="Short description shown in post list">
+        </div>
+        <div class="form-group" style="flex:0 0 200px">
+            <label>tags <span class="label-hint">(comma separated)</span></label>
+            <input type="text" name="tags" placeholder="rust, web, devlog">
+        </div>
     </div>
 
-    <div class="form-group">
-        <label>excerpt <span style="color:var(--border)">(optional)</span></label>
-        <input type="text" name="excerpt" value="{{ post.excerpt | default(value='') }}"
-               placeholder="Short description shown in post list">
-    </div>
-
-    <div class="form-group">
-        <label>tags <span style="color:var(--border)">(comma separated)</span></label>
-        <input type="text" name="tags" placeholder="rust, web, devlog">
-    </div>
-
-    <div class="form-group">
-        <label>content <span style="color:var(--border)">(markdown)</span></label>
-        <textarea name="content" required
-                  placeholder="# Title&#10;&#10;Write your post in markdown...">{{ post.content | default(value='') }}</textarea>
+    <div class="editor-area" id="editor-area">
+        <div class="editor-pane">
+            <div class="pane-label">markdown</div>
+            <textarea name="content" id="editor" required
+                      placeholder="# Title&#10;&#10;Write your post in markdown...">{{ post.content | default(value='') }}</textarea>
+        </div>
+        <div class="preview-pane" id="preview-pane" style="display:none">
+            <div class="pane-label">preview</div>
+            <div class="preview-content content" id="preview-content">
+                <p style="color:var(--text-muted);font-size:0.875rem">Start typing to see preview…</p>
+            </div>
+        </div>
     </div>
 
     <div class="form-actions">
-        <button type="submit" class="btn btn-primary">save</button>
+        <button type="submit" class="btn btn-primary">save draft</button>
         <a href="/admin" class="btn btn-ghost">cancel</a>
     </div>
 </form>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script>
+    const editor      = document.getElementById('editor');
+    const preview     = document.getElementById('preview-content');
+    const previewPane = document.getElementById('preview-pane');
+    const editorArea  = document.getElementById('editor-area');
+    const toggleBtn   = document.getElementById('toggle-preview');
+
+    // Configure marked
+    marked.setOptions({ breaks: true, gfm: true });
+
+    let splitActive = false;
+    let debounceTimer = null;
+
+    function renderPreview() {
+        const md = editor.value.trim();
+        preview.innerHTML = md
+            ? marked.parse(md)
+            : '<p style="color:var(--text-muted);font-size:0.875rem">Start typing to see preview…</p>';
+    }
+
+    editor.addEventListener('input', () => {
+        if (!splitActive) return;
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(renderPreview, 150);
+    });
+
+    toggleBtn.addEventListener('click', () => {
+        splitActive = !splitActive;
+        if (splitActive) {
+            previewPane.style.display = 'flex';
+            editorArea.classList.add('split');
+            toggleBtn.textContent = 'editor only';
+            renderPreview();
+        } else {
+            previewPane.style.display = 'none';
+            editorArea.classList.remove('split');
+            toggleBtn.textContent = 'split view';
+        }
+    });
+</script>
 {% endblock %}

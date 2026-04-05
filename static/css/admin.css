@@ -127,11 +127,68 @@
     margin-bottom: 0.35rem;
 }
 
-.post-form textarea[name="content"] {
+.label-hint { color: var(--border); font-size: 0.7rem; text-transform: none; letter-spacing: 0; }
+
+.form-meta-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.form-meta-row .form-group { min-width: 180px; }
+
+/* ─── Editor / Preview split ─────────────────────────────────────────────── */
+.editor-area {
+    display: flex;
+    gap: 1rem;
+    min-height: 520px;
+}
+
+.editor-area.split .editor-pane,
+.editor-area.split .preview-pane {
+    flex: 1;
+}
+
+.editor-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-pane {
+    flex: 1;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.pane-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    padding: 0.4rem 0.875rem;
+    background: var(--bg-3);
+    border-bottom: 1px solid var(--border);
+}
+
+.editor-pane #editor {
+    flex: 1;
     font-family: var(--font-mono);
     font-size: 0.875rem;
     min-height: 480px;
     line-height: 1.65;
+    resize: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+}
+
+.preview-content {
+    flex: 1;
+    padding: 1.25rem 1.5rem;
+    overflow-y: auto;
+    background: var(--bg);
+    height: 100%;
 }
 
 .form-actions {
